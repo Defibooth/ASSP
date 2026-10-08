@@ -227,6 +227,8 @@ const CONFIG = {
   // Adresse du script Google qui range les photos dans ton Google Drive (voir le guide).
   // Laisse "" pour désactiver l'envoi.
   urlEnvoi: "https://script.google.com/macros/s/AKfycbyDxFbVk5VjKqHWECnpjt9UBWVyByYAZvGKmPpk_ca00UqHjBgMtJnxQuYlUmT2Xwe8/exec",
+  // Format des photos : "camera" (3:4 / 4:3, format du téléphone) ou "2:3" (format tirage photo 10x15)
+  format: "2:3",
   cameraParDefaut: "environment"   // "user" = selfie, "environment" = caméra arrière
 };
 /* ========================================================= */
@@ -421,9 +423,16 @@ function controlsSize(land) {
   const r = controlsEl.getBoundingClientRect();
   return land ? r.width : r.height;
 }
+// Proportions de la photo (largeur / hauteur) selon le format choisi et la position du téléphone
+function targetRatio(land) {
+  if (CONFIG.format === '2:3') return land ? 3 / 2 : 2 / 3;
+  const vw = video.videoWidth, vh = video.videoHeight;
+  return vw && vh ? vw / vh : (land ? 4 / 3 : 3 / 4);
+}
 function previewRect() {
   const W = window.innerWidth, H = window.innerHeight, land = W > H;
-  const vw = video.videoWidth || (land ? 4 : 3), vh = video.videoHeight || (land ? 3 : 4);
+  const ratio = targetRatio(land);
+  const vw = ratio, vh = 1;
   const cs = land ? 0 : controlsSize(false);
   const sc = land ? Math.min(W / vw, H / vh) : Math.min(W / vw, (H - cs) / vh);
   const w = vw * sc, h = vh * sc;
@@ -476,13 +485,18 @@ let counting = false;
 function capture() {
   const vw = video.videoWidth, vh = video.videoHeight;
   if (!vw || !vh) return;
-  const W = vw, H = vh;   // photo au format et à la résolution de la caméra
+  // recadrage au centre selon le format choisi (aucun recadrage en format "camera")
+  const ta = targetRatio(window.innerWidth > window.innerHeight);
+  let sw = vw, sh = vh;
+  if (vw / vh > ta) sw = Math.round(vh * ta); else sh = Math.round(vw / ta);
+  const sx = Math.round((vw - sw) / 2), sy = Math.round((vh - sh) / 2);
+  const W = sw, H = sh;
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const ctx = c.getContext('2d');
   ctx.save();
   if (mirrored) { ctx.translate(W, 0); ctx.scale(-1, 1); }
-  ctx.drawImage(video, 0, 0, W, H);
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H);
   ctx.restore();
   paintFrame(ctx, W, H);
 
