@@ -457,10 +457,7 @@ function paintFrame(ctx, w, h) {
   } else {
     ctx.font = `600 ${4.8 * u}px "Oswald", "Arial Narrow", sans-serif`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(CONFIG.date.toUpperCase(), tx, titleY + 6.5 * u);
-    ctx.font = `500 ${3.9 * u}px "Oswald", "Arial Narrow", sans-serif`;
-    ctx.fillStyle = JAUNE;
-    ctx.fillText(CONFIG.lieu, tx, titleY + 11.5 * u);
+    ctx.fillText(CONFIG.date.toUpperCase(), tx, titleY + 3.5 * u);
   }
   ctx.restore();
 
