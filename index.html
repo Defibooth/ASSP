@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#111111">
 <title>ASSP Saint-Privat-des-Vieux</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +19,7 @@
     --vert: #ffd200;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: #0d0d0d; color: #fff; font-family: "Oswald", "Arial Narrow", sans-serif; overflow: hidden; }
+  html, body { height: 100%; width: 100%; background: #0d0d0d; color: #fff; font-family: "Oswald", "Arial Narrow", sans-serif; overflow: hidden; }
 
   #stage { position: fixed; inset: 0; }
   #video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -524,7 +526,21 @@ async function save() {
 }
 
 /* ---------- Boutons ---------- */
-document.getElementById('startBtn').onclick = startCamera;
+// Plein écran (cache la barre d'adresse du navigateur), puis ouverture de l'appareil photo
+function goFullscreen() {
+  const el = document.documentElement;
+  const fs = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (fs && !document.fullscreenElement && !document.webkitFullscreenElement) {
+    try { const p = fs.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  }
+}
+document.getElementById('startBtn').onclick = () => { goFullscreen(); startCamera(); };
+// Si le plein écran a été quitté, on le remet au prochain appui sur le déclencheur
+document.getElementById('shutter').addEventListener('click', goFullscreen);
+document.getElementById('retakeBtn').addEventListener('click', goFullscreen);
+// Redessine le filtre quand on tourne le téléphone ou change de plein écran
+window.addEventListener('orientationchange', () => setTimeout(drawOverlay, 250));
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => setTimeout(drawOverlay, 250)));
 document.getElementById('shutter').onclick = shoot;
 document.getElementById('switchBtn').onclick = switchCamera;
 document.getElementById('retakeBtn').onclick = () => { document.getElementById('result').style.display = 'none'; };
