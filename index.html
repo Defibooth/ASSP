@@ -211,7 +211,7 @@
    ========================================================= */
 const CONFIG = {
   titre: "Allez l'ASSP !",
-  date: "Saison 2026 / 2027",
+  date: "Saison 2026-2027",
   lieu: "Saint-Privat-des-Vieux",
   nomFichier: "assp-saint-privat",
   echarpe: "A.S. SAINT-PRIVAT-DES-VIEUX",
@@ -383,9 +383,14 @@ function paintFrame(ctx, w, h) {
   // Date et lieu (sur une seule ligne en paysage)
   ctx.shadowColor = 'rgba(0,0,0,.85)'; ctx.shadowBlur = 1.5 * u;
   if (land) {
-    ctx.font = `600 ${4.6 * u}px "Oswald", "Arial Narrow", sans-serif`;
+    // Paysage : seulement la saison, en blanc, centrée dans le bandeau jaune et rouge
+    ctx.font = `600 ${6.4 * u}px "Oswald", "Arial Narrow", sans-serif`;
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 2 * u;
+    ctx.lineWidth = .8 * u; ctx.strokeStyle = 'rgba(0,0,0,.55)';
+    ctx.strokeText(CONFIG.date.toUpperCase(), w / 2, bh * 0.5);
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(CONFIG.date.toUpperCase() + '  •  ' + CONFIG.lieu, tx, titleY + 7 * u);
+    ctx.fillText(CONFIG.date.toUpperCase(), w / 2, bh * 0.5);
   } else {
     ctx.font = `600 ${4.8 * u}px "Oswald", "Arial Narrow", sans-serif`;
     ctx.fillStyle = '#ffffff';
