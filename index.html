@@ -415,13 +415,35 @@ function paintFrame(ctx, w, h) {
 
 function drawOverlay() {
   const dpr = window.devicePixelRatio || 1;
-  overlay.width = overlay.clientWidth * dpr;
-  overlay.height = overlay.clientHeight * dpr;
+  const r = overlay.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  overlay.width = Math.round(r.width * dpr);
+  overlay.height = Math.round(r.height * dpr);
   const ctx = overlay.getContext('2d');
   ctx.clearRect(0, 0, overlay.width, overlay.height);
   paintFrame(ctx, overlay.width, overlay.height);
 }
 window.addEventListener('resize', drawOverlay);
+// Redessine le filtre dès que la taille de l'écran change (rotation du téléphone) : évite tout effet écrasé/étiré
+if (window.ResizeObserver) new ResizeObserver(() => drawOverlay()).observe(overlay);
+
+// Après une rotation, si l'image de la caméra n'est pas dans le même sens que l'écran,
+// on relance la caméra pour qu'elle reprenne les bonnes proportions.
+let rotTimer = null, lastRestart = null;
+function checkCameraOrientation() {
+  clearTimeout(rotTimer);
+  rotTimer = setTimeout(() => {
+    drawOverlay();
+    if (!stream || !video.videoWidth || switching) return;
+    if (document.getElementById('result').style.display === 'flex') return;
+    const screenLand = window.innerWidth > window.innerHeight;
+    const videoLand = video.videoWidth > video.videoHeight;
+    // une seule relance par position, pour ne jamais tourner en boucle
+    if (screenLand !== videoLand && lastRestart !== screenLand) { lastRestart = screenLand; startCamera(); }
+  }, 700);
+}
+window.addEventListener('orientationchange', checkCameraOrientation);
+window.addEventListener('resize', checkCameraOrientation);
 // Redessine une fois les polices chargées
 if (document.fonts) {
   Promise.all([document.fonts.load('40px "Anton"'), document.fonts.load('600 20px "Oswald"'), document.fonts.load('500 20px "Oswald"')])
