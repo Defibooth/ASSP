@@ -543,15 +543,10 @@ function goFullscreen() {
   const el = document.documentElement;
   const fs = el.requestFullscreen || el.webkitRequestFullscreen;
   if (fs && !document.fullscreenElement && !document.webkitFullscreenElement) {
-    try {
-      const p = fs.call(el, { navigationUI: 'hide' });
-      if (p && p.then) p.then(lockLandscape).catch(() => {});
-    } catch (e) {}
-  } else lockLandscape();
-}
-// Bascule l'écran en paysage (Android ; l'iPhone ne le permet pas, il suffit de tourner le téléphone)
-function lockLandscape() {
-  try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
+    try { const p = fs.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  }
+  // L'écran suit la position du téléphone (portrait ou paysage)
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
 }
 document.getElementById('startBtn').onclick = () => { goFullscreen(); startCamera(); };
 // Si le plein écran a été quitté, on le remet au prochain appui sur le déclencheur
