@@ -225,7 +225,7 @@ const CONFIG = {
   // Adresse du script Google qui range les photos dans ton Google Drive (voir le guide).
   // Laisse "" pour désactiver l'envoi.
   urlEnvoi: "https://script.google.com/macros/s/AKfycbyDxFbVk5VjKqHWECnpjt9UBWVyByYAZvGKmPpk_ca00UqHjBgMtJnxQuYlUmT2Xwe8/exec",
-  cameraParDefaut: "user"   // "user" = selfie, "environment" = caméra arrière
+  cameraParDefaut: "environment"   // "user" = selfie, "environment" = caméra arrière
 };
 /* ========================================================= */
 
@@ -334,7 +334,7 @@ function paintFrame(ctx, w, h) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * 0.34);
 
   // Bandeau du haut : jaune à gauche, rouge à droite, en diagonale (comme le maillot)
-  const bh = land ? 15 * u : 19 * u;
+  const bh = land ? 11 * u : 14 * u;
   ctx.save();
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 0.56, 0); ctx.lineTo(w * 0.44, bh); ctx.lineTo(0, bh * 1.25); ctx.closePath();
   ctx.fillStyle = JAUNE; ctx.globalAlpha = .93; ctx.fill();
@@ -358,7 +358,7 @@ function paintFrame(ctx, w, h) {
   ctx.restore();
 
   // Blason : au centre (portrait) ou dans le coin gauche (paysage)
-  const ch = land ? 30 * u : 33 * u;
+  const ch = land ? 24 * u : 28 * u;
   let cw = ch * 0.834;
   if (crest.complete && crest.naturalWidth) cw = ch * crest.naturalWidth / crest.naturalHeight;
   const cx = land ? 6 * u : w / 2 - cw / 2;
@@ -374,7 +374,7 @@ function paintFrame(ctx, w, h) {
   ctx.save();
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   const titre = CONFIG.titre.toUpperCase();
-  let size = land ? 11 * u : 12 * u;
+  let size = land ? 8 * u : 9 * u;
   const maxW = land ? w * 0.5 : w * 0.88;
   ctx.font = `${size}px "Anton", Impact, sans-serif`;
   while (ctx.measureText(titre).width > maxW && size > 4 * u) { size -= 0.5 * u; ctx.font = `${size}px "Anton", Impact, sans-serif`; }
@@ -389,7 +389,7 @@ function paintFrame(ctx, w, h) {
   ctx.shadowColor = 'rgba(0,0,0,.85)'; ctx.shadowBlur = 1.5 * u;
   if (land) {
     // Paysage : seulement la saison, en blanc, centrée dans le bandeau jaune et rouge
-    ctx.font = `600 ${6.4 * u}px "Oswald", "Arial Narrow", sans-serif`;
+    ctx.font = `600 ${5.2 * u}px "Oswald", "Arial Narrow", sans-serif`;
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 2 * u;
     ctx.lineWidth = .8 * u; ctx.strokeStyle = 'rgba(0,0,0,.55)';
@@ -538,8 +538,15 @@ function goFullscreen() {
   const el = document.documentElement;
   const fs = el.requestFullscreen || el.webkitRequestFullscreen;
   if (fs && !document.fullscreenElement && !document.webkitFullscreenElement) {
-    try { const p = fs.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
-  }
+    try {
+      const p = fs.call(el, { navigationUI: 'hide' });
+      if (p && p.then) p.then(lockLandscape).catch(() => {});
+    } catch (e) {}
+  } else lockLandscape();
+}
+// Bascule l'écran en paysage (Android ; l'iPhone ne le permet pas, il suffit de tourner le téléphone)
+function lockLandscape() {
+  try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
 }
 document.getElementById('startBtn').onclick = () => { goFullscreen(); startCamera(); };
 // Si le plein écran a été quitté, on le remet au prochain appui sur le déclencheur
