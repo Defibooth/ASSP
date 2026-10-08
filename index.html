@@ -414,23 +414,35 @@ function paintFrame(ctx, w, h) {
 
 }
 
-// Zone où s'affiche l'image de la caméra : format réel de la photo (4:3), sans recadrage
+// Zone où s'affiche l'image de la caméra : format réel de la photo (3:4 / 4:3), sans recadrage.
+// En portrait, les boutons sont collés juste sous l'image ; en paysage, ils restent sur le bord droit.
+const controlsEl = document.getElementById('controls');
+function controlsSize(land) {
+  const r = controlsEl.getBoundingClientRect();
+  return land ? r.width : r.height;
+}
 function previewRect() {
-  const W = window.innerWidth, H = window.innerHeight;
-  const vw = video.videoWidth || (W > H ? 4 : 3), vh = video.videoHeight || (W > H ? 3 : 4);
-  const sc = Math.min(W / vw, H / vh);
+  const W = window.innerWidth, H = window.innerHeight, land = W > H;
+  const vw = video.videoWidth || (land ? 4 : 3), vh = video.videoHeight || (land ? 3 : 4);
+  const cs = land ? 0 : controlsSize(false);
+  const sc = land ? Math.min(W / vw, H / vh) : Math.min(W / vw, (H - cs) / vh);
   const w = vw * sc, h = vh * sc;
-  // portrait : un peu plus haut pour laisser la place aux boutons en bas ; paysage : un peu à gauche
-  const x = W > H ? (W - w) * 0.3 : (W - w) / 2;
-  const y = W > H ? (H - h) / 2 : (H - h) * 0.3;
-  return { x, y, w, h };
+  const x = land ? (W - w) * 0.3 : (W - w) / 2;
+  const y = land ? (H - h) / 2 : Math.max(0, (H - h - cs) / 2);
+  return { x, y, w, h, land };
 }
 function placePreview() {
+  const land = window.innerWidth > window.innerHeight;
+  // les boutons prennent leur taille naturelle pour pouvoir être mesurés
+  const st = controlsEl.style;
+  if (land) { st.top = ''; st.bottom = ''; st.right = ''; st.left = ''; st.width = ''; }   // réglages du CSS (bord droit)
+  else { st.left = '0px'; st.right = '0px'; st.bottom = 'auto'; st.top = '0px'; st.width = ''; }
   const r = previewRect();
   for (const el of [video, overlay]) {
     el.style.left = r.x + 'px'; el.style.top = r.y + 'px';
     el.style.width = r.w + 'px'; el.style.height = r.h + 'px';
   }
+  if (!land) st.top = (r.y + r.h) + 'px';
 }
 
 function drawOverlay() {
