@@ -181,7 +181,7 @@
 </div>
 
 <div id="stage">
-  <video id="video" autoplay playsinline muted></video>
+  <video id="video" autoplay playsinline muted disablepictureinpicture disableremoteplayback></video>
   <canvas id="overlay"></canvas>
 </div>
 
@@ -228,7 +228,7 @@ const CONFIG = {
   // Laisse "" pour désactiver l'envoi.
   urlEnvoi: "https://script.google.com/macros/s/AKfycbyDxFbVk5VjKqHWECnpjt9UBWVyByYAZvGKmPpk_ca00UqHjBgMtJnxQuYlUmT2Xwe8/exec",
   // Format des photos : "camera" (3:4 / 4:3, format du téléphone) ou "2:3" (format tirage photo 10x15)
-  format: "2:3",
+  format: "camera",
   cameraParDefaut: "environment"   // "user" = selfie, "environment" = caméra arrière
 };
 /* ========================================================= */
@@ -599,6 +599,21 @@ function goFullscreen() {
   // L'écran suit la position du téléphone (portrait ou paysage)
   try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
 }
+// Quand on quitte l'appli (bouton d'accueil du téléphone) : on coupe la caméra au lieu de passer
+// en petite fenêtre, puis on la rallume en revenant.
+video.disablePictureInPicture = true;
+let wasRunning = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    wasRunning = !!stream;
+    if (document.pictureInPictureElement && document.exitPictureInPicture) document.exitPictureInPicture().catch(() => {});
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; }
+  } else if (wasRunning && document.getElementById('result').style.display !== 'flex') {
+    startCamera();
+  }
+});
+video.addEventListener('enterpictureinpicture', () => { if (document.exitPictureInPicture) document.exitPictureInPicture().catch(() => {}); });
+
 document.getElementById('startBtn').onclick = () => { goFullscreen(); startCamera(); };
 // Si le plein écran a été quitté, on le remet au prochain appui sur le déclencheur
 document.getElementById('shutter').addEventListener('click', goFullscreen);
